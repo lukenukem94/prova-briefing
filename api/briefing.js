@@ -15,8 +15,7 @@ async function callClaude(userPrompt) {
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'interleaved-thinking-2025-05-14'
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
@@ -35,6 +34,8 @@ async function callClaude(userPrompt) {
   const data = await resp.json();
   return data.content.filter(b => b.type === 'text').map(b => b.text).join('');
 }
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function parseJson(raw) {
   const clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
@@ -135,6 +136,8 @@ Return ONLY this JSON structure:
     try { newsData = parseJson(newsRaw); }
     catch { newsData = { newsArticles: [], overallOverview: 'Could not parse news results.' }; }
 
+    await delay(15000);
+
     // Step 2: Reddit scan
     const redditRaw = await callClaude(
       `Search the web for Reddit posts or threads mentioning "Martyn's Law" or "Terrorism Protection of Premises Act" in the last 30 days. Look in r/unitedkingdom, r/ukpolitics, r/education, r/hospitality, r/religion, r/smallbusiness, r/AskUK and similar.
@@ -159,6 +162,8 @@ Return ONLY this JSON structure:
     let redditData;
     try { redditData = parseJson(redditRaw); }
     catch { redditData = { redditPosts: [], redditOverview: 'No Reddit data found.' }; }
+
+    await delay(15000);
 
     // Step 3: LinkedIn recommendations
     const allArticles = [...(newsData.newsArticles || []), ...(redditData.redditPosts || [])];
